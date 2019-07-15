@@ -95,6 +95,7 @@ table(final$age)
 table(final$city)
 
 # Sort the dataset by age group to reflect 40-54 as the first group.
+final$age <- factor(final$age, levels = c("40-54","55-59","60-64", "65-69", "70-74", ">74" ))
 final <- final[order(final$age),]
 
 ```
@@ -127,7 +128,7 @@ There is a clear difference in lung cancer rates by age, with rates increasing u
 7. Fit a Poisson regression model modelling rate of cancer against age and city, requesting incidence rate ratios. Interpret these incidence rate ratios.
 
 ```{r}
-pois <- glm(cases ~ age +city + log(pop), data=final, 
+pois <- glm(cases ~ age +city, offset=log(pop), data=final, 
 family = poisson(link = log))
 
 #to calculate IRR values from the beta coefficients
@@ -138,7 +139,7 @@ exp(confint(pois))
 ```
 
 
-The Poisson regression model is fitted using the numeric versions of age and city, and population size as the exposure. Note that pop is an exposure, and not an offset. The offset statement is included in Stata mainly for consistency with other software packages. It is simpler to use the exposure statement in Stata.
+The Poisson regression model is fitted using the numeric versions of age and city, and population size as the exposure.  
 
     The IRR for age group 55-59 can be interpreted as:
     After adjusting for city, the incidence rate of lung cancer in those aged 55-59 was 3.0 (95% CI: 1.8 to 4.9) 
@@ -180,7 +181,7 @@ pois1 <- glm(cases ~ age + log(pop), family = poisson(link = log), data=final)
 pois1
 
 # And a regression model with the variable of interest
-pois_original <- glm(cases ~ age + city + log(pop), family = poisson(link = log), data=final)
+pois_original <- glm(cases ~ age + city, offset=log(pop), family = poisson(link = log), data=final)
 pois_original
 
 lrtest(pois1,pois_original)
@@ -192,4 +193,4 @@ BIC(pois1,pois_original)
 # Our conclusion is unchanged from the Wald test.
 ```
 
-Please note that the output might differ from that obtained using STATA. 
+Note that the output might differ from that obtained using STATA. 
