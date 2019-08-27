@@ -480,7 +480,7 @@ data2</code></pre>
 ## 23     8 70-74      Vejle
 ## 24     7   &gt;74      Vejle</code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li>You will need to merge the population data onto the cancer data. What type of merge is this: a 1-to-1, many-to-1, 1-to-many or many-to-many? Perform the merge and note the Result table. What do you conclude from this table? Examine the merged data.</li>
+<li>You will need to merge the population data onto the cancer data. What type of merge is this: a 1-to-1, many-to-1, 1-to-many or many-to-many? Perform the merge and examine the merged data. What do you conclude from this table? Examine the merged data. If you are satisfied with the results of the merge, continue.</li>
 </ol>
 <pre class="r"><code># This is a 1-to-1 merg. To merge data1 onto data2 (to merge population and cancer data), we reopen the cancer data.  The variables that define the merge are 'age' and 'city'. Note that unlike STATA, we define a new dataset that is the result of merging both data1 and data2
 
@@ -580,19 +580,21 @@ After adjusting for age, the incidence rate of lung cancer for those living in H
 <ol start="8" style="list-style-type: decimal">
 <li>Test the joint effect of city after adjusting for age using a Wald test.</li>
 </ol>
-<p>Unfortunately, there is no equivalent of the function testparm in R. Inference can easily be performed using the <code>summary()</code> method for assessing the regression coefficients via partial Wald tests or the <code>anova()</code> method for comparing nested models via an analysis of deviance.</p>
+<p>Inference can easily be performed using the <code>summary()</code> method for assessing the regression coefficients via partial Wald tests or the <code>anova()</code> method for comparing nested models via an analysis of deviance.</p>
 <pre class="r"><code># Install the &quot;lmtest&quot; package before the next step.
+
 library(lmtest)
-waldtest &lt;- waldtest(glm(cases~age+city+log(pop), data=final, family = poisson(link = log)))
-waldtest</code></pre>
+pois.full &lt;- glm(cases ~ age + city,  data=final, family = poisson(link = log))
+pois.reduced &lt;- glm(cases ~ age,  data=final, family = poisson(link = log))
+waldtest(pois.full, pois.reduced, test=&quot;Chisq&quot;)</code></pre>
 <pre><code>## Wald test
 ## 
-## Model 1: cases ~ age + city + log(pop)
-## Model 2: cases ~ 1
-##   Res.Df Df      F Pr(&gt;F)
-## 1     14                 
-## 2     23 -9 0.9197 0.5362</code></pre>
-<p>We conclude that there is no evidence that the lung cancer rate differs between the four cities (P=0.53).</p>
+## Model 1: cases ~ age + city
+## Model 2: cases ~ age
+##   Res.Df Df  Chisq Pr(&gt;Chisq)
+## 1     15                     
+## 2     18 -3 2.0999     0.5519</code></pre>
+<p>We conclude that there is no evidence that the lung cancer rate differs between the four cities (P=0.55).</p>
 <ol start="9" style="list-style-type: decimal">
 <li>Perform a goodness of fit test to assess the how well this model fits the observed data.</li>
 </ol>
@@ -621,38 +623,38 @@ pois1</code></pre>
 ## Null Deviance:       27.7 
 ## Residual Deviance: 21.91     AIC: 132.3</code></pre>
 <pre class="r"><code># And a regression model with the variable of interest
-pois_original &lt;- glm(cases ~ age + city, offset=log(pop), family = poisson(link = log), data=final)
+pois_original &lt;- glm(cases ~ age + city + log(pop), family = poisson(link = log), data=final)
 pois_original</code></pre>
 <pre><code>## 
-## Call:  glm(formula = cases ~ age + city, family = poisson(link = log), 
-##     data = final, offset = log(pop))
+## Call:  glm(formula = cases ~ age + city + log(pop), family = poisson(link = log), 
+##     data = final)
 ## 
 ## Coefficients:
 ## (Intercept)     age55-59     age60-64     age65-69     age70-74  
-##     -5.6321       1.1010       1.5186       1.7677       1.8569  
-##      age&gt;74  cityHorsens  cityKolding    cityVejle  
-##      1.4197      -0.3301      -0.3715      -0.2723  
+##     11.7496      -1.3842      -1.2366      -1.4378      -1.8049  
+##      age&gt;74  cityHorsens  cityKolding    cityVejle     log(pop)  
+##     -1.8383       0.1833      -0.0483      -0.1679      -1.2096  
 ## 
-## Degrees of Freedom: 23 Total (i.e. Null);  15 Residual
-## Null Deviance:       129.9 
-## Residual Deviance: 23.45     AIC: 137.8</code></pre>
+## Degrees of Freedom: 23 Total (i.e. Null);  14 Residual
+## Null Deviance:       27.7 
+## Residual Deviance: 19.5  AIC: 135.9</code></pre>
 <pre class="r"><code>lrtest(pois1,pois_original)</code></pre>
 <pre><code>## Likelihood ratio test
 ## 
 ## Model 1: cases ~ age + log(pop)
-## Model 2: cases ~ age + city
+## Model 2: cases ~ age + city + log(pop)
 ##   #Df  LogLik Df  Chisq Pr(&gt;Chisq)
 ## 1   7 -59.151                     
-## 2   9 -59.918  2 1.5339     0.4644</code></pre>
+## 2  10 -57.943  3 2.4154     0.4908</code></pre>
 <pre class="r"><code># The AIC and the BIC can be seen in the above model outputs but can otherwise be shown as below
 AIC(pois1,pois_original)</code></pre>
 <pre><code>##               df      AIC
 ## pois1          7 132.3017
-## pois_original  9 137.8355</code></pre>
+## pois_original 10 135.8862</code></pre>
 <pre class="r"><code>BIC(pois1,pois_original)</code></pre>
-<pre><code>##               df     BIC
-## pois1          7 140.548
-## pois_original  9 148.438</code></pre>
+<pre><code>##               df      BIC
+## pois1          7 140.5480
+## pois_original 10 147.6668</code></pre>
 <pre class="r"><code># Our conclusion is unchanged from the Wald test.</code></pre>
 <p>Note that the output might differ from that obtained using STATA.</p>
 </div>

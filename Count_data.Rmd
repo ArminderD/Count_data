@@ -74,7 +74,7 @@ str(data2)
 data2
 ```
 
-3. You will need to merge the population data onto the cancer data. What type of merge is this: a 1-to-1, many-to-1, 1-to-many or many-to-many? Perform the merge and note the Result table. What do you conclude from this table? Examine the merged data. 
+3. You will need to merge the population data onto the cancer data. What type of merge is this: a 1-to-1, many-to-1, 1-to-many or many-to-many? Perform the merge and examine the merged data. What do you conclude from this table? Examine the merged data. If you are satisfied with the results of the merge, continue. 
 
 ```{r}
 # This is a 1-to-1 merg. To merge data1 onto data2 (to merge population and cancer data), we reopen the cancer data.  The variables that define the merge are 'age' and 'city'. Note that unlike STATA, we define a new dataset that is the result of merging both data1 and data2
@@ -151,16 +151,19 @@ The Poisson regression model is fitted using the numeric versions of age and cit
 
 8. Test the joint effect of city after adjusting for age using a Wald test.
 
-Unfortunately, there is no equivalent of the function testparm in R. Inference can easily be performed using the `summary()` method for assessing the regression coefficients via partial Wald tests or the `anova()` method for comparing nested models via an analysis of deviance. 
+Inference can easily be performed using the `summary()` method for assessing the regression coefficients via partial Wald tests or the `anova()` method for comparing nested models via an analysis of deviance. 
 
 ```{r}
 # Install the "lmtest" package before the next step.
+
 library(lmtest)
-waldtest <- waldtest(glm(cases~age+city+log(pop), data=final, family = poisson(link = log)))
-waldtest
+pois.full <- glm(cases ~ age + city,  data=final, family = poisson(link = log))
+pois.reduced <- glm(cases ~ age,  data=final, family = poisson(link = log))
+waldtest(pois.full, pois.reduced, test="Chisq")
+
 ```
 
-We conclude that there is no evidence that the lung cancer rate differs between the four cities (P=0.53).
+We conclude that there is no evidence that the lung cancer rate differs between the four cities (P=0.55).
 
 9. Perform a goodness of fit test to assess the how well this model fits the observed data.
 
@@ -181,7 +184,7 @@ pois1 <- glm(cases ~ age + log(pop), family = poisson(link = log), data=final)
 pois1
 
 # And a regression model with the variable of interest
-pois_original <- glm(cases ~ age + city, offset=log(pop), family = poisson(link = log), data=final)
+pois_original <- glm(cases ~ age + city + log(pop), family = poisson(link = log), data=final)
 pois_original
 
 lrtest(pois1,pois_original)
